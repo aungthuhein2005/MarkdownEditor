@@ -20,18 +20,12 @@ public class MarkdownEditor {
      * @param args the command line arguments
      */
     
-    
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
     
     public static void main(String[] args) {
         // TODO code application logic here
         installFlatLaf();
-        SwingUtilities.invokeLater(() -> {
-//            JFrame frame = new JFrame("FlatLaf Application");
-//            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//            frame.setSize(400, 300);
-//            frame.setVisible(true);
-              MainFrame frame = new MainFrame();
-        });
+        java.awt.EventQueue.invokeLater(()->new MainFrame().setVisible(true));
         
     }
     

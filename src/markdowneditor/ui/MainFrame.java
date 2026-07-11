@@ -14,12 +14,16 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import java.util.Arrays;
 import java.util.List;
+import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import markdowneditor.controller.EditorController;
+import markdowneditor.controller.FileTreeController;
 import markdowneditor.controller.PreviewController;
+import markdowneditor.controller.UndoRedoController;
 import markdowneditor.model.DocumentModel;
 import org.commonmark.Extension;
+import java.awt.Image;
 
 /**
  *
@@ -27,43 +31,60 @@ import org.commonmark.Extension;
  */
 public class MainFrame extends javax.swing.JFrame {
 
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
-
     private final DocumentModel model = new DocumentModel();
     private EditorController editorController;
     private PreviewController previewController;
+    private FileTreeController fileTreeController;
+    private UndoRedoController undoRedoController;
+
     /**
      * Creates new form NewJFrame
      */
     public MainFrame() {
 
-        installFlatLaf();
         initComponents();
         
+         ImageIcon icon = new ImageIcon(getClass().getResource("/icons/logo.png"));
+        Image image = icon.getImage();
+        setIconImage(image);
+
         editorController = new EditorController(this, txtEditor, model);
         previewController = new PreviewController(previewPane, txtEditor);
-        
+        fileTreeController = new FileTreeController(this, jTree1, editorController, jPanel1);
+        undoRedoController = new UndoRedoController(txtEditor);
+        fileTreeController.restoreLastFolder();
+
+        model.addListener(this::updateTitle);
+
         txtEditor.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { onEdit(); }
-            public void removeUpdate(DocumentEvent e) { onEdit(); }
-            public void changedUpdate(DocumentEvent e) { onEdit(); }
+            public void insertUpdate(DocumentEvent e) {
+                onEdit();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                onEdit();
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                onEdit();
+            }
+        });
+
+        updateTitle();
+        SwingUtilities.invokeLater(() -> {
+            jSplitPane1.setDividerLocation(0.5);
         });
     }
 
-    private void onEdit(){
+    private void updateTitle() {
+        String name = model.getDisplayName();
+        String modifiedMark = model.isModified() ? " •" : "";
+        setTitle(name + modifiedMark + " - Markdown Editor");
+    }
+
+    private void onEdit() {
         previewController.updatePreview();
         model.setModified(true);
-    }
-    
-    private static void installFlatLaf() {
-        try {
-            UIManager.setLookAndFeel("com.formdev.flatlaf.FlatLightLaf");
-        } catch (Exception e) {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {
-            }
-        }
     }
 
     /**
@@ -76,28 +97,36 @@ public class MainFrame extends javax.swing.JFrame {
     private void initComponents() {
 
         Outer = new javax.swing.JSplitPane();
-        Side = new javax.swing.JScrollPane();
-        jTree1 = new javax.swing.JTree();
         jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane3 = new javax.swing.JScrollPane();
         txtEditor = new javax.swing.JTextArea();
         jScrollPane4 = new javax.swing.JScrollPane();
         previewPane = new javax.swing.JEditorPane();
+        jPanel1 = new javax.swing.JPanel();
+        Side = new javax.swing.JScrollPane();
+        jTree1 = new javax.swing.JTree();
+        jPanel2 = new javax.swing.JPanel();
+        jPanel3 = new javax.swing.JPanel();
+        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(1, 10), new java.awt.Dimension(1, 10));
+        jLabel2 = new javax.swing.JLabel();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(32767, 10), new java.awt.Dimension(1, 10), new java.awt.Dimension(1, 10));
+        btnOpenFolder = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
         menuOpen = new javax.swing.JMenuItem();
+        menuOpenFolder = new javax.swing.JMenuItem();
         menuSave = new javax.swing.JMenuItem();
         menuSaveAs = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
-        jMenu3 = new javax.swing.JMenu();
-        jMenuItem5 = new javax.swing.JMenuItem();
+        menuUndo = new javax.swing.JMenuItem();
+        menuRedo = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setPreferredSize(new java.awt.Dimension(1200, 800));
 
-        Side.setMinimumSize(new java.awt.Dimension(60, 16));
-        Side.setViewportView(jTree1);
-
-        Outer.setLeftComponent(Side);
+        jSplitPane1.setDividerLocation(360);
+        jSplitPane1.setResizeWeight(0.5);
 
         txtEditor.setColumns(20);
         txtEditor.setRows(5);
@@ -112,18 +141,61 @@ public class MainFrame extends javax.swing.JFrame {
 
         Outer.setRightComponent(jSplitPane1);
 
+        jPanel1.setLayout(new java.awt.CardLayout());
+
+        Side.setMinimumSize(new java.awt.Dimension(60, 16));
+        Side.setViewportView(jTree1);
+
+        jPanel1.add(Side, "card2");
+
+        jPanel2.setMinimumSize(new java.awt.Dimension(120, 39));
+        jPanel2.setLayout(new java.awt.BorderLayout());
+
+        jPanel3.setAlignmentX(0.5F);
+        jPanel3.setLayout(new javax.swing.BoxLayout(jPanel3, javax.swing.BoxLayout.Y_AXIS));
+        jPanel3.add(filler2);
+
+        jLabel2.setText("No Folder Open");
+        jLabel2.setAlignmentX(0.5F);
+        jLabel2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jPanel3.add(jLabel2);
+        jPanel3.add(filler1);
+
+        btnOpenFolder.setText("Open Folder");
+        btnOpenFolder.setAlignmentX(0.5F);
+        jPanel3.add(btnOpenFolder);
+
+        jPanel2.add(jPanel3, java.awt.BorderLayout.NORTH);
+
+        jPanel1.add(jPanel2, "card3");
+
+        Outer.setLeftComponent(jPanel1);
+
         getContentPane().add(Outer, java.awt.BorderLayout.CENTER);
 
         jMenu1.setText("File");
 
+        jMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        jMenuItem1.setText("New");
+        jMenuItem1.addActionListener(this::jMenuItem1ActionPerformed);
+        jMenu1.add(jMenuItem1);
+
+        menuOpen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         menuOpen.setText("Open");
         menuOpen.addActionListener(this::menuOpenActionPerformed);
         jMenu1.add(menuOpen);
 
+        menuOpenFolder.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_K, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        menuOpenFolder.setText("Open Folder");
+        menuOpenFolder.addActionListener(this::menuOpenFolderActionPerformed);
+        jMenu1.add(menuOpenFolder);
+
+        menuSave.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         menuSave.setText("Save");
         menuSave.addActionListener(this::menuSaveActionPerformed);
         jMenu1.add(menuSave);
 
+        menuSaveAs.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.SHIFT_DOWN_MASK | java.awt.event.InputEvent.CTRL_DOWN_MASK));
         menuSaveAs.setText("Save As");
         menuSaveAs.addActionListener(this::menuSaveAsActionPerformed);
         jMenu1.add(menuSaveAs);
@@ -131,14 +203,18 @@ public class MainFrame extends javax.swing.JFrame {
         jMenuBar1.add(jMenu1);
 
         jMenu2.setText("Edit");
+
+        menuUndo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        menuUndo.setText("Undo");
+        menuUndo.addActionListener(this::menuUndoActionPerformed);
+        jMenu2.add(menuUndo);
+
+        menuRedo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Y, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        menuRedo.setText("Redo");
+        menuRedo.addActionListener(this::menuRedoActionPerformed);
+        jMenu2.add(menuRedo);
+
         jMenuBar1.add(jMenu2);
-
-        jMenu3.setText("View");
-
-        jMenuItem5.setText("Explore");
-        jMenu3.add(jMenuItem5);
-
-        jMenuBar1.add(jMenu3);
 
         setJMenuBar(jMenuBar1);
 
@@ -160,47 +236,54 @@ public class MainFrame extends javax.swing.JFrame {
         editorController.openFile();
     }//GEN-LAST:event_menuOpenActionPerformed
 
+    private void menuOpenFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOpenFolderActionPerformed
+        // TODO add your handling code here:
+        fileTreeController.openFolderDialog();
+    }//GEN-LAST:event_menuOpenFolderActionPerformed
+
+    private void menuUndoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuUndoActionPerformed
+        // TODO add your handling code here:
+        undoRedoController.undo();
+    }//GEN-LAST:event_menuUndoActionPerformed
+
+    private void menuRedoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuRedoActionPerformed
+        // TODO add your handling code here:
+        undoRedoController.redo();
+    }//GEN-LAST:event_menuRedoActionPerformed
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        // TODO add your handling code here:
+        editorController.newFile();
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new MainFrame().setVisible(true));
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSplitPane Outer;
     private javax.swing.JScrollPane Side;
+    private javax.swing.JButton btnOpenFolder;
+    private javax.swing.Box.Filler filler1;
+    private javax.swing.Box.Filler filler2;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
-    private javax.swing.JMenu jMenu3;
     private javax.swing.JMenuBar jMenuBar1;
-    private javax.swing.JMenuItem jMenuItem5;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JTree jTree1;
     private javax.swing.JMenuItem menuOpen;
+    private javax.swing.JMenuItem menuOpenFolder;
+    private javax.swing.JMenuItem menuRedo;
     private javax.swing.JMenuItem menuSave;
     private javax.swing.JMenuItem menuSaveAs;
+    private javax.swing.JMenuItem menuUndo;
     private javax.swing.JEditorPane previewPane;
     private javax.swing.JTextArea txtEditor;
     // End of variables declaration//GEN-END:variables

@@ -35,15 +35,15 @@ public class EditorController {
         if (!confirmDiscardChange()) {
             return;
         }
-        JFileChooser chooser = new JFileChooser();
-        chooser.setFileFilter(new FileNameExtensionFilter("Markdown Files (*.md)", "md"));
-        if (chooser.showOpenDialog(parentFrame) == JFileChooser.APPROVE_OPTION) {
-            openFile(chooser.getSelectedFile());
-        }
+        editorArea.setText("");
+        model.setcurrentFile(null);
+        model.setModified(false);
     }
 
-        public void openFile() {
-        if (!confirmDiscardChange()) return;
+    public void openFile() {
+        if (!confirmDiscardChange()) {
+            return;
+        }
         JFileChooser chooser = new JFileChooser();
         chooser.setFileFilter(new FileNameExtensionFilter("Markdown Files (*.md)", "md"));
         if (chooser.showOpenDialog(parentFrame) == JFileChooser.APPROVE_OPTION) {
@@ -52,6 +52,9 @@ public class EditorController {
     }
 
     public void openFile(File file) {
+        if (!confirmDiscardChange()) {
+            return;
+        }
         try {
             String content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
             editorArea.setText(content);
