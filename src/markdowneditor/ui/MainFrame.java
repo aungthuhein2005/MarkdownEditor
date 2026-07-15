@@ -54,6 +54,9 @@ public class MainFrame extends javax.swing.JFrame {
         previewController = new PreviewController(previewPane, txtEditor);
         fileTreeController = new FileTreeController(this, jTree1, editorController, jPanel1);
         undoRedoController = new UndoRedoController(txtEditor);
+
+        editorController.setFileTreeController(fileTreeController); // ← new line
+
         fileTreeController.restoreLastFolder();
 
         model.addListener(this::updateTitle);
@@ -132,6 +135,7 @@ public class MainFrame extends javax.swing.JFrame {
         menuReportIssue = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setPreferredSize(new java.awt.Dimension(1200, 800));
 
         jSplitPane1.setDividerLocation(360);
         jSplitPane1.setResizeWeight(0.5);
@@ -266,20 +270,21 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_menuViewGithubActionPerformed
 
     private void openUrl(String url) {
-    try {
-        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            Desktop.getDesktop().browse(new URI(url));
-        } else {
+        try {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(new URI(url));
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Please visit: " + url,
+                        "Link", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (IOException | URISyntaxException e) {
             JOptionPane.showMessageDialog(this,
-                    "Please visit: " + url,
-                    "Link", JOptionPane.INFORMATION_MESSAGE);
+                    "Could not open link: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
-    } catch (IOException | URISyntaxException e) {
-        JOptionPane.showMessageDialog(this,
-                "Could not open link: " + e.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE);
     }
-}
+
     private void menuExportPdfActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_menuExportPdfActionPerformed
         // TODO add your handling code here:
         String bodyHtml = previewController.getBodyHtml();

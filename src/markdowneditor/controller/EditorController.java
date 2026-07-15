@@ -25,19 +25,69 @@ public class EditorController {
     private final DocumentModel model;
     private final JFrame parentFrame;
 
+    private FileTreeController fileTreeController;
+
     public EditorController(JFrame parentFrame, JTextArea editorArea, DocumentModel model) {
         this.parentFrame = parentFrame;
         this.editorArea = editorArea;
         this.model = model;
     }
 
+    public void setFileTreeController(FileTreeController fileTreeController) {
+        this.fileTreeController = fileTreeController;
+    }
+
+
     public void newFile() {
         if (!confirmDiscardChange()) {
             return;
         }
-        editorArea.setText("");
-        model.setcurrentFile(null);
-        model.setModified(false);
+
+        File folder = (fileTreeController != null) ? fileTreeController.getCurrentRootFolder() : null;
+
+        if (folder != null) {
+            // A folder is open — create the new file inside it
+            String name = JOptionPane.showInputDialog(parentFrame, "New file name:", "untitled.md");
+            if (name == null || name.trim().isEmpty()) {
+                return;
+            }
+            if (!name.toLowerCase().endsWith(".md")) {
+                name += ".md";
+            }
+
+            File newFile = new File(folder, name);
+            if (newFile.exists()) {
+                showError("A file named \"" + name + "\" already exists.");
+                return;
+            }
+            try {
+                newFile.createNewFile();
+                editorArea.setText("");
+                model.setcurrentFile(newFile);
+                model.setModified(false);
+                fileTreeController.refresh();
+            } catch (IOException ex) {
+                showError("Could not create file: " + ex.getMessage());
+            }
+        } else {
+            // No folder open — behave as before, a blank untitled buffer
+            editorArea.setText("");
+            model.setcurrentFile(null);
+            model.setModified(false);
+        }
+    }
+
+    private void writeToFile(File file) {
+        try {
+            Files.write(file.toPath(), editorArea.getText().getBytes(StandardCharsets.UTF_8));
+            model.setcurrentFile(file);
+            model.setModified(false);
+            if (fileTreeController != null) {
+                fileTreeController.refresh(); // new files created via Save As now show up in the sidebar
+            }
+        } catch (IOException ex) {
+            showError("Could not save file: " + ex.getMessage());
+        }
     }
 
     public void openFile() {
@@ -82,16 +132,6 @@ public class EditorController {
                 file = new File(file.getParentFile(), file.getName() + ".md");
             }
             writeToFile(file);
-        }
-    }
-
-    public void writeToFile(File file) {
-        try {
-            Files.write(file.toPath(), editorArea.getText().getBytes(StandardCharsets.UTF_8));
-            model.setcurrentFile(file);
-            model.setModified(false);
-        } catch (IOException e) {
-            showError("Could not save file " + e.getMessage());
         }
     }
 

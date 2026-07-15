@@ -22,74 +22,86 @@ import java.util.prefs.Preferences;
  * @author Aung Thu Hein
  */
 public class FileTreeController {
-    
-    private static  final String LAST_FOLDER_KEY = "lastOpenedFolder";
+
+    private static final String LAST_FOLDER_KEY = "lastOpenedFolder";
     private final Preferences prefs = Preferences.userNodeForPackage(FileTreeController.class);
-    
+    private File currentRootFolder;
     private static final String CARD_TREE = "card2";   // match whatever NetBeans generated
     private static final String CARD_EMPTY = "card3";  // match whatever NetBeans generated
     private final Container sidebarPanel;
-    
+
     private final JTree tree;
     private final EditorController editorController;
     private final JFrame parentFrame;
-    
-    public FileTreeController(JFrame parentFrame, JTree tree, EditorController editorController, Container sidebarPanel){
+
+    public FileTreeController(JFrame parentFrame, JTree tree, EditorController editorController, Container sidebarPanel) {
         this.parentFrame = parentFrame;
         this.tree = tree;
         this.editorController = editorController;
-        this.sidebarPanel =sidebarPanel;
+        this.sidebarPanel = sidebarPanel;
         attachedDoubleClickListener();
     }
-    
-    public void openFolderDialog(){
+
+    public void openFolderDialog() {
         JFileChooser chooser = new JFileChooser();
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        if(chooser.showOpenDialog(parentFrame) == JFileChooser.APPROVE_OPTION){
+        if (chooser.showOpenDialog(parentFrame) == JFileChooser.APPROVE_OPTION) {
             loadFolder(chooser.getSelectedFile());
         }
     }
-    
-    public void loadFolder(File rootFolder){
-        FileTreeNode root = new FileTreeNode(rootFolder, null);
-        tree.setModel(new DefaultTreeModel(root));
-        tree.setRootVisible(true);
-        prefs.put(LAST_FOLDER_KEY, rootFolder.getAbsolutePath());
-        showCard(CARD_TREE);
-    }
-    
-    public void restoreLastFolder(){
+
+
+    public void restoreLastFolder() {
         String path = prefs.get(LAST_FOLDER_KEY, null);
-        if(path != null){
+        if (path != null) {
             File folder = new File(path);
-            if(folder.exists() && folder.isDirectory()){
+            if (folder.exists() && folder.isDirectory()) {
                 loadFolder(folder);
                 return;
             }
         }
         showCard(CARD_EMPTY);
     }
-    
-    private void showCard(String cardName){
-        ((CardLayout)sidebarPanel.getLayout()).show(sidebarPanel, cardName);
+
+    public File getCurrentRootFolder() {
+        return currentRootFolder;
     }
-    
-    private void attachedDoubleClickListener(){
-        tree.addMouseListener(new MouseAdapter(){
+
+    public void loadFolder(File rootFolder) {
+        this.currentRootFolder = rootFolder;
+        FileTreeNode root = new FileTreeNode(rootFolder, null);
+        tree.setModel(new DefaultTreeModel(root));
+        tree.setRootVisible(true);
+        prefs.put(LAST_FOLDER_KEY, rootFolder.getAbsolutePath());
+        showCard(CARD_TREE);
+    }
+
+    public void refresh() {
+        if (currentRootFolder != null) {
+            loadFolder(currentRootFolder); // rebuilds the node tree with fresh directory listing
+        }
+    }
+
+    private void showCard(String cardName) {
+        ((CardLayout) sidebarPanel.getLayout()).show(sidebarPanel, cardName);
+    }
+
+    private void attachedDoubleClickListener() {
+        tree.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(e.getClickCount() == 2){
+                if (e.getClickCount() == 2) {
                     TreePath path = tree.getPathForLocation(e.getX(), e.getY());
-                    if(path != null){
+                    if (path != null) {
                         FileTreeNode node = (FileTreeNode) path.getLastPathComponent();
-                        if(!node.getFiel().isDirectory()){
+                        if (!node.getFiel().isDirectory()) {
                             editorController.openFile(node.getFiel());
                         }
                     }
                 }
             }
-            
+
         });
     }
-    
+
 }
