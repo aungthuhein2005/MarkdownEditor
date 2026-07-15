@@ -1,4 +1,6 @@
-build/
-dist/
-nbproject/private/
-packaging/cache/
+  build/
+  dist/
+  nbproject/private/
+  packaging/cache/
+  packaging/input/
+  packaging/runtime/
