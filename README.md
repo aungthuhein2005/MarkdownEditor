@@ -6,6 +6,10 @@ MarkdownEditor is a simple desktop Markdown editor built with Java Swing. It was
 
 This application provides a lightweight way to write Markdown, preview it as HTML, and manage Markdown files from your local machine. The project focuses on a clean desktop experience while keeping the implementation simple and beginner-friendly.
 
+## Details
+
+[GitHub Pages](https://aungthuhein2005.github.io/MarkdownEditor/index.html)
+
 ## Features
 
 - Create, open, save, and save-as Markdown files
