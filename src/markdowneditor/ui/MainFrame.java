@@ -257,7 +257,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void menutHow2UseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menutHow2UseActionPerformed
         // TODO add your handling code here:
-        openUrl("https://aungthuhein2005.github.io/MarkdownEditor");
+        openUrl("https://aungthuhein2005.github.io/MarkdownEditor/index.html");
     }//GEN-LAST:event_menutHow2UseActionPerformed
 
     private void menuViewGithubActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuViewGithubActionPerformed
