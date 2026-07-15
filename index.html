@@ -1,1 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarkdownEditor — a small desktop editor for Markdown</title>
+<meta name="description" content="A lightweight Java Swing desktop app for writing and previewing Markdown, with a folder browser, undo history, and PDF export.">
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --paper: #faf9f6;
+    --paper-2: #f1efe9;
+    --ink: #201f1d;
+    --ink-soft: #5b574f;
+    --ink-faint: #948e80;
+    --rule: #ddd8cb;
+    --accent: #3d5a80;
+    --accent-soft: #e8eef3;
+    --code-bg: #efece2;
+
+    --display: 'Lora', Georgia, serif;
+    --body: 'Inter', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a{ color: var(--accent); }
+  a:focus-visible, button:focus-visible{
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  .wrap{
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    padding: 20px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav{
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand-row{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand{
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .brand span{ color: var(--accent); }
+  .nav-links{
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+  }
+  .nav-links a{
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+  .nav-links a:hover{ color: var(--accent); }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding: 72px 0 48px;
+  }
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0 0 18px;
+  }
+  h1{
+    font-family: var(--display);
+    font-size: 46px;
+    font-weight: 600;
+    line-height: 1.15;
+    margin: 0 0 18px;
+    letter-spacing: -0.01em;
+  }
+  .lede{
+    font-size: 18px;
+    color: var(--ink-soft);
+    max-width: 52ch;
+    margin: 0 0 32px;
+  }
+  .cta-row{
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 56px;
+  }
+  .btn{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 14.5px;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: transform 0.12s ease, background 0.12s ease;
+  }
+  .btn-primary{
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-primary:hover{ transform: translateY(-1px); }
+  .btn-secondary{
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--rule);
+  }
+  .btn-secondary:hover{ border-color: var(--ink-faint); }
+
+  /* ---------- Signature: raw / rendered split ---------- */
+  .split-demo{
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--paper-2);
+    box-shadow: 0 1px 2px rgba(32,31,29,0.04);
+  }
+  .split-bar{
+    display: flex;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    border-bottom: 1px solid var(--rule);
+  }
+  .split-bar span{
+    padding: 8px 16px;
+    width: 50%;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .split-bar span:first-child{ border-right: 1px solid var(--rule); }
+  .split-body{
+    display: flex;
+  }
+  .split-pane{
+    width: 50%;
+    padding: 20px 22px;
+  }
+  .split-pane.raw{
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-soft);
+    border-right: 1px solid var(--rule);
+    white-space: pre-wrap;
+  }
+  .split-pane.raw .tok{ color: var(--accent); }
+  .split-pane.rendered h3{
+    font-family: var(--display);
+    font-size: 20px;
+    margin: 0 0 10px;
+  }
+  .split-pane.rendered p{
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0 0 10px;
+  }
+  .split-pane.rendered code{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .split-pane.rendered ul{
+    margin: 0;
+    padding-left: 18px;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- Sections ---------- */
+  section{ padding: 56px 0; }
+  section + section{ border-top: 1px solid var(--rule); }
+
+  h2{
+    font-family: var(--display);
+    font-size: 26px;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+  .section-lede{
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin: 0 0 32px;
+    max-width: 56ch;
+  }
+
+  .features{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 32px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .features li{ }
+  .features .f-title{
+    font-family: var(--mono);
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ink);
+    margin: 0 0 6px;
+  }
+  .features .f-title::before{
+    content: "· ";
+    color: var(--accent);
+  }
+  .features .f-desc{
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  .steps{
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .steps li{
+    counter-increment: step;
+    position: relative;
+    padding: 0 0 28px 40px;
+    border-left: 1px solid var(--rule);
+    margin-left: 3px;
+  }
+  .steps li:last-child{ padding-bottom: 2px; }
+  .steps li::before{
+    content: counter(step);
+    position: absolute;
+    left: -13px;
+    top: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .steps h3{
+    font-size: 15.5px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .steps p{
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  .steps code{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  pre{
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 10px 0 0;
+  }
+
+  .stack-list{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+  .stack-list li{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    padding: 5px 11px;
+    border-radius: 5px;
+  }
+
+  footer{
+    padding: 32px 0 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+  footer a{ color: var(--ink-faint); }
+  footer a:hover{ color: var(--accent); }
+
+  @media (max-width: 640px){
+    h1{ font-size: 34px; }
+    .features{ grid-template-columns: 1fr; }
+    .split-body{ flex-direction: column; }
+    .split-pane{ width: 100%; }
+    .split-pane.raw{ border-right: none; border-bottom: 1px solid var(--rule); }
+    .split-bar span{ width: 100%; }
+    .split-bar{ flex-direction: column; }
+    .split-bar span:first-child{ border-right: none; border-bottom: 1px solid var(--rule); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior: auto; }
+    .btn{ transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+   <div class="brand-row">
+     <img src="logo.png" alt="" width="23" height="23">
+    <a class="brand" href="#top">Markdown<span>Editor</span></a>
+   </div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#usage">Usage</a>
+      <a href="#contribute">Contribute</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="top">
+
+  <section class="hero">
+    <p class="eyebrow">Java · Swing · Desktop</p>
+    <h1>Write Markdown.<br>See it rendered, instantly.</h1>
+    <p class="lede">A small, focused desktop editor for Markdown files — a raw pane on the left, a live preview on the right, and nothing else competing for your attention.</p>
+
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#usage">Get started</a>
+      <a class="btn btn-secondary" href="https://github.com/aungthuhein2005/MarkdownEditor">View source</a>
+      <a class="btn btn-secondary" href="https://github.com/aungthuhein2005/MarkdownEditor/releases">Download</a>
+    </div>
+
+    <div class="split-demo">
+      <div class="split-bar"><span>you type</span><span>you get</span></div>
+      <div class="split-body">
+        <div class="split-pane raw"><span class="tok">##</span> Weekly notes
+
+Track progress with a checklist:
+
+<span class="tok">-</span> [x] Draft outline
+<span class="tok">-</span> [ ] Add table
+
+<span class="tok">|</span> Task <span class="tok">|</span> Owner <span class="tok">|</span>
+<span class="tok">|---|---|</span>
+<span class="tok">|</span> Ship it <span class="tok">|</span> You <span class="tok">|</span></div>
+        <div class="split-pane rendered">
+          <h3>Weekly notes</h3>
+          <p>Track progress with a checklist:</p>
+          <ul>
+            <li>☑ Draft outline</li>
+            <li>☐ Add table</li>
+          </ul>
+          <p style="margin-top:10px;"><code>Task</code> / <code>Owner</code> table renders below it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <h2>What it does</h2>
+    <p class="section-lede">Built for writing, not managing settings. Every feature is one most Markdown files actually need.</p>
+    <ul class="features">
+      <li>
+        <p class="f-title">Live preview</p>
+        <p class="f-desc">Every keystroke updates the rendered pane, including GitHub-flavored tables.</p>
+      </li>
+      <li>
+        <p class="f-title">Folder browser</p>
+        <p class="f-desc">Open a folder once; the sidebar remembers it and lists your Markdown files.</p>
+      </li>
+      <li>
+        <p class="f-title">Undo &amp; redo</p>
+        <p class="f-desc">Full edit history per session, mapped to the shortcuts you already know.</p>
+      </li>
+      <li>
+        <p class="f-title">Export to PDF</p>
+        <p class="f-desc">Turn a rendered document into a shareable PDF in one menu action.</p>
+      </li>
+      <li>
+        <p class="f-title">Unsaved-change tracking</p>
+        <p class="f-desc">The title bar tells you what's open and whether it's been edited.</p>
+      </li>
+      <li>
+        <p class="f-title">Runs anywhere Java does</p>
+        <p class="f-desc">A single Swing app — no browser, no Electron, no background services.</p>
+      </li>
+    </ul>
+  </section>
+
+  <section id="usage">
+    <h2>Using it</h2>
+    <p class="section-lede">Four steps from download to a finished document.</p>
+    <ol class="steps">
+      <li>
+        <h3>Download the app</h3>
+        <p>Grab the latest installer from the <a href="https://github.com/aungthuhein2005/MarkdownEditor/releases">Releases</a> page for your platform.</p>
+      </li>
+      <li>
+        <h3>Open a file or folder</h3>
+        <p>Use <code>File → Open</code> for a single document, or <code>File → Open Folder</code> to browse a whole project in the sidebar.</p>
+      </li>
+      <li>
+        <h3>Write</h3>
+        <p>Type Markdown on the left. The right pane updates as you go — no separate preview command to remember.</p>
+      </li>
+      <li>
+        <h3>Save or export</h3>
+        <p>Save back to <code>.md</code> with <code>Ctrl+S</code>, or turn the current preview into a PDF from the Export menu.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section id="contribute">
+    <h2>Contributing</h2>
+    <p class="section-lede">The project is built in NetBeans with drag-and-drop Swing forms, so the fastest path in is opening it the same way.</p>
+    <ol class="steps">
+      <li>
+        <h3>Clone the repo</h3>
+        <pre>git clone https://github.com/aungthuhein2005/MarkdownEditor.git</pre>
+      </li>
+      <li>
+        <h3>Open in NetBeans</h3>
+        <p>Use <code>File → Open Project</code> and select the cloned folder. The UI forms open in the Design view, controllers and models are plain Java.</p>
+      </li>
+      <li>
+        <h3>Make your change</h3>
+        <p>The app follows a light MVC split — <code>model/</code>, <code>controller/</code>, and <code>ui/</code> — so most fixes touch one package at a time.</p>
+      </li>
+      <li>
+        <h3>Open a pull request</h3>
+        <p>Push a branch and describe what changed and why. Small, focused PRs are easiest to review.</p>
+      </li>
+    </ol>
+
+    <p class="section-lede" style="margin-top: 36px; margin-bottom: 12px;">Found a bug instead? <a href="https://github.com/aungthuhein2005/MarkdownEditor/issues/new">Open an issue</a> with your OS and Java version — the app includes both in the report template.</p>
+
+    <ul class="stack-list">
+      <li>Java Swing</li>
+      <li>commonmark-java</li>
+      <li>FlatLaf</li>
+      <li>NetBeans</li>
+      <li>jpackage</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <span>MarkdownEditor — MIT Licensed</span>
+  <span><a href="https://github.com/aungthuhein2005/MarkdownEditor">github.com/yourusername/MarkdownEditor</a></span>
+</footer>
+
+</body>
+</html>
