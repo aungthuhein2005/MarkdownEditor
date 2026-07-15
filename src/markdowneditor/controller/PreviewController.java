@@ -20,6 +20,7 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
 import javafx.embed.swing.JFXPanel;
+
 /**
  *
  * @author Aung Thu Hein
@@ -33,18 +34,19 @@ public class PreviewController {
     private final JFXPanel previewPane;
     private final JTextArea sourceArea;
     private WebView webView;
+
     public PreviewController(JFXPanel previewPane, JTextArea sourceArea) {
         this.previewPane = previewPane;
         this.sourceArea = sourceArea;
-        
+
         Platform.runLater(() -> {
 
             webView = new WebView();
-    
+
             Scene scene = new Scene(webView);
-    
+
             previewPane.setScene(scene);
-    
+
         });
     }
 
@@ -58,9 +60,14 @@ public class PreviewController {
                 + "</style></head><body>"
                 + bodyHtml
                 + "</body></html>";
-                Platform.runLater(() -> {
-                    webView.getEngine().loadContent(html);
-                });
+        Platform.runLater(() -> {
+            webView.getEngine().loadContent(html);
+        });
+    }
+
+    public String getBodyHtml() {
+        String markdown = sourceArea.getText();
+        return renderer.render(parser.parse(markdown));
     }
 
     private String loadCss() {
