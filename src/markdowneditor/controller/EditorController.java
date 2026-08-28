@@ -26,6 +26,7 @@ public class EditorController {
     private final JFrame parentFrame;
 
     private FileTreeController fileTreeController;
+    private UndoRedoController undoRedoController;
 
     public EditorController(JFrame parentFrame, JTextArea editorArea, DocumentModel model) {
         this.parentFrame = parentFrame;
@@ -35,6 +36,30 @@ public class EditorController {
 
     public void setFileTreeController(FileTreeController fileTreeController) {
         this.fileTreeController = fileTreeController;
+    }
+
+    public void setUndoRedoController(UndoRedoController undoRedoController) {
+        this.undoRedoController = undoRedoController;
+    }
+
+    public boolean isCurrentFile(File file) {
+        File currentFile = model.getcurrentFile();
+        return currentFile != null && currentFile.equals(file);
+    }
+
+    public boolean hasUnsavedChanges(File file) {
+        return isCurrentFile(file) && model.isModified();
+    }
+
+    public void closeFile(File file) {
+        if (!isCurrentFile(file)) {
+            return;
+        }
+
+        editorArea.setText("");
+        resetUndoHistory();
+        model.setcurrentFile(null);
+        model.setModified(false);
     }
 
 
@@ -63,6 +88,7 @@ public class EditorController {
             try {
                 newFile.createNewFile();
                 editorArea.setText("");
+                resetUndoHistory();
                 model.setcurrentFile(newFile);
                 model.setModified(false);
                 fileTreeController.refresh();
@@ -72,6 +98,7 @@ public class EditorController {
         } else {
             // No folder open — behave as before, a blank untitled buffer
             editorArea.setText("");
+            resetUndoHistory();
             model.setcurrentFile(null);
             model.setModified(false);
         }
@@ -97,7 +124,7 @@ public class EditorController {
         JFileChooser chooser = new JFileChooser();
         chooser.setFileFilter(new FileNameExtensionFilter("Markdown Files (*.md)", "md"));
         if (chooser.showOpenDialog(parentFrame) == JFileChooser.APPROVE_OPTION) {
-            openFile(chooser.getSelectedFile());
+            loadFile(chooser.getSelectedFile());
         }
     }
 
@@ -105,9 +132,14 @@ public class EditorController {
         if (!confirmDiscardChange()) {
             return;
         }
+        loadFile(file);
+    }
+
+    private void loadFile(File file) {
         try {
             String content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
             editorArea.setText(content);
+            resetUndoHistory();
             model.setcurrentFile(file);
             model.setModified(false);
         } catch (IOException ex) {
@@ -131,7 +163,32 @@ public class EditorController {
             if (!file.getName().toLowerCase().endsWith(".md")) {
                 file = new File(file.getParentFile(), file.getName() + ".md");
             }
+            if (!confirmOverwrite(file)) {
+                return;
+            }
             writeToFile(file);
+        }
+    }
+
+    public boolean canCloseApplication() {
+        return confirmDiscardChange();
+    }
+
+    private boolean confirmOverwrite(File file) {
+        if (!file.exists()) {
+            return true;
+        }
+
+        int result = JOptionPane.showConfirmDialog(parentFrame,
+                "\"" + file.getName() + "\" already exists. Replace it?",
+                "Confirm Save As", JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        return result == JOptionPane.YES_OPTION;
+    }
+
+    private void resetUndoHistory() {
+        if (undoRedoController != null) {
+            undoRedoController.resetHistory();
         }
     }
 

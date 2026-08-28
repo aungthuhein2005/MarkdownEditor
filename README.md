@@ -12,7 +12,7 @@ This application provides a lightweight way to write Markdown, preview it as HTM
 
 ## Features
 
-- Create, open, save, and save-as Markdown files
+- Create, open, save, save-as, and delete Markdown files
 - Live preview of Markdown as HTML
 - Open a folder and browse project files in a tree view (last folder is remembered)
 - Undo and redo support
@@ -75,12 +75,13 @@ ant
 powershell -ExecutionPolicy Bypass -File .\package-windows.ps1
 ```
 
-The installer is written to `dist/installer/MarkdownEditor-1.0.0.exe`.
+The installer is written to `dist/installer/MarkdownEditor-1.1.0.exe`.
 
 ## Usage
 
 - Open a Markdown file from the File menu (`File → Open`)
 - Or open a folder with `File → Open Folder` to browse files in the sidebar
+- Right-click a file in the sidebar and choose `Delete File`, or select it and press `Delete`
 - Start typing in the editor pane; the preview pane updates as you go
 - Save with `Ctrl+S`, or export the current preview to PDF from the Export menu
 

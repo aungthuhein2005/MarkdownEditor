@@ -11,7 +11,7 @@ $JdkHome = "C:\Program Files\Java\jdk-23"
 $JdkBin = Join-Path $JdkHome "bin"
 $WixBin = "C:\Program Files (x86)\WiX Toolset v3.14\bin"
 $AppName = "MarkdownEditor"
-$AppVersion = "1.0.0"
+$AppVersion = "1.1.0"
 $MainClass = "markdowneditor.MarkdownEditor"
 $Vendor = "Aung Thu Hein"
 # JavaFX 26 requires JDK 24+; package against JavaFX 23 to match JDK 23.
@@ -39,11 +39,13 @@ $JavaFxHome = Join-Path $CacheDir "javafx-sdk-$JavaFxVersion"
 Write-Host "==> Cleaning old packaging output"
 function Remove-TreeSafe([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path)) { return }
-    if (Test-Path -LiteralPath $Path -PathType Leaf) {
-        Remove-Item -LiteralPath $Path -Force
-    } else {
-        cmd /c "rd /s /q \\?\$Path" | Out-Null
+    $fullPath = [System.IO.Path]::GetFullPath($Path)
+    $projectPrefix = [System.IO.Path]::GetFullPath($ProjectRoot).TrimEnd('\') + '\'
+    if (-not $fullPath.StartsWith($projectPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to remove a path outside the project: $fullPath"
     }
+
+    Remove-Item -LiteralPath $fullPath -Recurse -Force
     if (Test-Path -LiteralPath $Path) {
         throw "Failed to remove $Path"
     }
@@ -123,10 +125,25 @@ if ($LASTEXITCODE -ne 0) { throw "jlink failed" }
 
 Write-Host "==> Copying JavaFX native libraries"
 $fxBin = Join-Path $JavaFxHome "bin"
-Copy-Item (Join-Path $fxBin "*") (Join-Path $RuntimeDir "bin") -Force
+$runtimeBin = Join-Path $RuntimeDir "bin"
+Get-ChildItem $fxBin -File | ForEach-Object {
+    $sourceFile = $_.FullName
+    $destinationFile = Join-Path $runtimeBin $_.Name
+    $copied = $false
+    for ($attempt = 1; $attempt -le 5 -and -not $copied; $attempt++) {
+        try {
+            Copy-Item -LiteralPath $sourceFile -Destination $destinationFile -Force
+            $copied = $true
+        } catch {
+            if ($attempt -eq 5) { throw }
+            Start-Sleep -Seconds 1
+        }
+    }
+}
 
 Write-Host "==> Building Windows installer (.exe)"
 $jpackageArgs = @(
+    "--verbose",
     "--type", "exe",
     "--dest", $InstallerDir,
     "--name", $AppName,

@@ -5,7 +5,6 @@
 package markdowneditor.controller;
 
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
@@ -56,6 +55,10 @@ public class UndoRedoController {
 
     public boolean canRedo() {
         return undoManager.canRedo();
+    }
+
+    public void resetHistory() {
+        undoManager.discardAllEdits();
     }
 
 }

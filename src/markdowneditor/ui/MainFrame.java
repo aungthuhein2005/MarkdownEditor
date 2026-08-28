@@ -15,6 +15,8 @@ import markdowneditor.controller.PreviewController;
 import markdowneditor.controller.UndoRedoController;
 import markdowneditor.model.DocumentModel;
 import java.awt.Image;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -56,6 +58,18 @@ public class MainFrame extends javax.swing.JFrame {
         undoRedoController = new UndoRedoController(txtEditor);
 
         editorController.setFileTreeController(fileTreeController); // ← new line
+        editorController.setUndoRedoController(undoRedoController);
+        btnOpenFolder.addActionListener(e -> fileTreeController.openFolderDialog());
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (editorController.canCloseApplication()) {
+                    dispose();
+                }
+            }
+        });
 
         fileTreeController.restoreLastFolder();
 
@@ -134,7 +148,7 @@ public class MainFrame extends javax.swing.JFrame {
         menuViewGithub = new javax.swing.JMenuItem();
         menuReportIssue = new javax.swing.JMenuItem();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(1200, 800));
 
         jSplitPane1.setDividerLocation(360);
@@ -225,7 +239,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         jMenu3.setText("Export");
 
-        menuExportPdf.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_K, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        menuExportPdf.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_E, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         menuExportPdf.setText("Export to PDF");
         menuExportPdf.addActionListener(this::menuExportPdfActionPerformed);
         jMenu3.add(menuExportPdf);

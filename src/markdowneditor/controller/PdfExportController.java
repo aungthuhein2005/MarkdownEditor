@@ -42,6 +42,15 @@ public class PdfExportController {
         if (!outputFile.getName().toLowerCase().endsWith(".pdf")) {
             outputFile = new File(outputFile.getParentFile(), outputFile.getName() + ".pdf");
         }
+        if (outputFile.exists()) {
+            int result = javax.swing.JOptionPane.showConfirmDialog(parentFrame,
+                    "\"" + outputFile.getName() + "\" already exists. Replace it?",
+                    "Confirm PDF Export", javax.swing.JOptionPane.YES_NO_OPTION,
+                    javax.swing.JOptionPane.WARNING_MESSAGE);
+            if (result != javax.swing.JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
 
         try {
             String xhtml = toXhtml(bodyHtml);
