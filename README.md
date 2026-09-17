@@ -20,6 +20,7 @@ This application provides a lightweight way to write Markdown, preview it as HTM
 - Basic Markdown rendering with CommonMark support
 - GFM table support
 - Export the preview to PDF
+- AI-assisted summarizing, rewriting, and grammar correction with OpenAI, Gemini, or local Ollama models
 - Modern desktop styling with FlatLaf
 
 ## Tech Stack
@@ -75,7 +76,7 @@ ant
 powershell -ExecutionPolicy Bypass -File .\package-windows.ps1
 ```
 
-The installer is written to `dist/installer/MarkdownEditor-1.1.0.exe`.
+The installer is written to `dist/installer/MarkdownEditor-1.2.0.exe`.
 
 ## Usage
 
@@ -84,6 +85,21 @@ The installer is written to `dist/installer/MarkdownEditor-1.1.0.exe`.
 - Right-click a file in the sidebar and choose `Delete File`, or select it and press `Delete`
 - Start typing in the editor pane; the preview pane updates as you go
 - Save with `Ctrl+S`, or export the current preview to PDF from the Export menu
+- Configure a provider under `AI → AI Settings`, then summarize or rewrite a selection (or the full document when nothing is selected)
+
+### AI providers
+
+- **Ollama:** Runs locally at `http://localhost:11434` by default and does not require an API key.
+- **OpenAI:** Enter an API key for the current session or set the `OPENAI_API_KEY` environment variable.
+- **Gemini:** Enter an API key for the current session or set the `GEMINI_API_KEY` environment variable.
+
+API keys are never saved by MarkdownEditor. Before the first cloud request in each application session, the editor confirms how much Markdown will be sent to the selected provider. Generated text is shown for review before it can replace or be inserted into the document.
+
+For the default local setup, install Ollama, start it, and download the default model:
+
+```bash
+ollama pull llama3.2
+```
 
 ## Contributing
 

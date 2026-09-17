@@ -11,7 +11,7 @@ $JdkHome = "C:\Program Files\Java\jdk-23"
 $JdkBin = Join-Path $JdkHome "bin"
 $WixBin = "C:\Program Files (x86)\WiX Toolset v3.14\bin"
 $AppName = "MarkdownEditor"
-$AppVersion = "1.1.0"
+$AppVersion = "1.2.0"
 $MainClass = "markdowneditor.MarkdownEditor"
 $Vendor = "Aung Thu Hein"
 # JavaFX 26 requires JDK 24+; package against JavaFX 23 to match JDK 23.
@@ -149,7 +149,7 @@ $jpackageArgs = @(
     "--name", $AppName,
     "--app-version", $AppVersion,
     "--vendor", $Vendor,
-    "--description", "A simple desktop Markdown editor",
+    "--description", "A desktop Markdown editor with optional AI assistance",
     "--input", $InputDir,
     "--main-jar", "$AppName.jar",
     "--main-class", $MainClass,

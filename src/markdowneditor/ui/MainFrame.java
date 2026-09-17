@@ -10,6 +10,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import markdowneditor.controller.EditorController;
+import markdowneditor.controller.AiAssistantController;
 import markdowneditor.controller.FileTreeController;
 import markdowneditor.controller.PreviewController;
 import markdowneditor.controller.UndoRedoController;
@@ -23,6 +24,12 @@ import java.net.URISyntaxException;
 import markdowneditor.controller.PdfExportController;
 import javafx.embed.swing.JFXPanel;
 import javax.swing.JOptionPane;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.KeyStroke;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import markdowneditor.ai.AiOperation;
 
 /**
  *
@@ -36,6 +43,7 @@ public class MainFrame extends javax.swing.JFrame {
     private FileTreeController fileTreeController;
     private UndoRedoController undoRedoController;
     private PdfExportController pdfExportController;
+    private AiAssistantController aiAssistantController;
 
     /**
      * Creates new form NewJFrame
@@ -56,10 +64,12 @@ public class MainFrame extends javax.swing.JFrame {
         previewController = new PreviewController(previewPane, txtEditor);
         fileTreeController = new FileTreeController(this, jTree1, editorController, jPanel1);
         undoRedoController = new UndoRedoController(txtEditor);
+        aiAssistantController = new AiAssistantController(this, txtEditor);
 
         editorController.setFileTreeController(fileTreeController); // ← new line
         editorController.setUndoRedoController(undoRedoController);
         btnOpenFolder.addActionListener(e -> fileTreeController.openFolderDialog());
+        addAiMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
@@ -104,6 +114,33 @@ public class MainFrame extends javax.swing.JFrame {
     private void onEdit() {
         previewController.updatePreview();
         model.setModified(true);
+    }
+
+    private void addAiMenu() {
+        JMenu aiMenu = new JMenu("AI");
+        JMenuItem summarizeItem = new JMenuItem("Summarize Selection or Document");
+        summarizeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
+                InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+        summarizeItem.addActionListener(e -> aiAssistantController.run(AiOperation.SUMMARIZE));
+
+        JMenuItem rewriteItem = new JMenuItem("Rewrite Selection or Document");
+        rewriteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,
+                InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+        rewriteItem.addActionListener(e -> aiAssistantController.run(AiOperation.REWRITE));
+
+        JMenuItem grammarItem = new JMenuItem("Fix Grammar");
+        grammarItem.addActionListener(e -> aiAssistantController.run(AiOperation.FIX_GRAMMAR));
+
+        JMenuItem settingsItem = new JMenuItem("AI Settings...");
+        settingsItem.addActionListener(e -> aiAssistantController.showSettings());
+
+        aiMenu.add(summarizeItem);
+        aiMenu.add(rewriteItem);
+        aiMenu.add(grammarItem);
+        aiMenu.addSeparator();
+        aiMenu.add(settingsItem);
+        jMenuBar1.add(aiMenu, Math.max(0, jMenuBar1.getMenuCount() - 1));
+        jMenuBar1.revalidate();
     }
 
     /**
