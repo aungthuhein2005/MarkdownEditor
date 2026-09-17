@@ -112,7 +112,7 @@ If you would like to improve the editor, please:
 3. Make your changes
 4. Submit a pull request
 
-The app follows a light MVC split (`model/`, `controller/`, `ui/`). Opening the project in NetBeans is the fastest path if you need to edit the Swing forms.
+The app follows a light MVC split (`model/`, `controller/`, `ui/`). Opening the project in NetBeans is the fastest path if you need to edit the Swing forms
 
 ## Roadmap
 
